@@ -1,38 +1,53 @@
 // useEffect: HTTP requests
-// http://localhost:3000/isolated/exercise/06.js
+// 💯 handle errors
+// http://localhost:3000/isolated/final/06.extra-1.js
 
 import * as React from 'react'
 import {
   fetchPokemon,
-  PokemonDataView,
-  PokemonForm,
   PokemonInfoFallback,
+  PokemonForm,
+  PokemonDataView,
 } from '../pokemon'
 
 function PokemonInfo({pokemonName}) {
+  const [status, setStatus] = React.useState('idle')
   const [pokemon, setPokemon] = React.useState(null)
+  const [error, setError] = React.useState(null)
 
   React.useEffect(() => {
     if (!pokemonName) {
       return
     }
 
-    setPokemon(null)
+    setStatus('pending')
 
-    fetchPokemon(pokemonName).then(pokemonData => {
-      setPokemon(pokemonData)
-    })
+    fetchPokemon(pokemonName).then(
+      pokemon => {
+        setPokemon(pokemon)
+        setStatus('resolved')
+      },
+      error => {
+        setError(error)
+        setStatus('rejected')
+      },
+    )
   }, [pokemonName])
 
-  if (!pokemonName) {
+  if (status === 'idle') {
     return 'Submit a pokemon'
-  }
-
-  if (!pokemon) {
+  } else if (status === 'pending') {
     return <PokemonInfoFallback name={pokemonName} />
+  } else if (status === 'rejected') {
+    return (
+      <div role="alert">
+        There was an error:{' '}
+        <pre style={{whiteSpace: 'normal'}}>{error.message}</pre>
+      </div>
+    )
+  } else if (status === 'resolved') {
+    return <PokemonDataView pokemon={pokemon} />
   }
-
-  return <PokemonDataView pokemon={pokemon} />
 }
 
 function App() {
